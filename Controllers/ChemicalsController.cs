@@ -20,9 +20,32 @@ namespace WhatInHere.Controllers
         }
 
         // GET: Chemicals
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string naturalChemical, string searchString)
         {
-            return View(await _context.Chemicals.ToListAsync());
+            IQueryable<string> naturalQuery = from m in _context.Chemicals
+                                            orderby m.Natural
+                                            select m.Natural;
+
+            var chemicals = from m in _context.Chemicals
+                         select m;
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                chemicals = chemicals.Where(s => s.Chemical.Contains(searchString));
+            }
+
+            if (!string.IsNullOrEmpty(naturalChemical))
+            {
+                chemicals = chemicals.Where(x => x.Natural == naturalChemical);
+            }
+
+            var chemicalsNatualVM = new NaturalChemicalViewModel
+            {
+                Natural = new SelectList(await naturalQuery.Distinct().ToListAsync()),
+                Chemicals = await chemicals.ToListAsync()
+            };
+
+            return View(chemicalsNatualVM);
         }
 
         // GET: Chemicals/Details/5
